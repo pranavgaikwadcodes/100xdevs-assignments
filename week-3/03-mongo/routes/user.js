@@ -1,4 +1,4 @@
-const { Router } = require("express");
+const { Router, response } = require("express");
 const router = Router();
 const userMiddleware = require("../middleware/user");
 const { User, Course } = require("../db");
@@ -41,15 +41,31 @@ router.post('/courses/:courseId', userMiddleware, (req, res) => {
         .catch((e) => {
             console.error(e);
         })
-        .then( (response) => {
+        .then((response) => {
             res.status(200).json({ message: "Course purchased successfully" });
         })
-
-    
 });
 
 router.get('/purchasedCourses', userMiddleware, (req, res) => {
     // Implement fetching purchased courses logic
+    const username = req.headers.username;
+
+    User.findOne({ username })
+        .then((response) => {
+
+            Course.find({
+                _id: { $in: response.purchasedCourses }
+            })
+                .then((coursesPurchased) => [
+                    res.status(200).json({ purchasedCourses: coursesPurchased })
+                ])
+                .catch((e) => {
+                    console.error(e);
+                })
+        })
+        .catch((err) => {
+            console.log(err);
+        })
 });
 
 module.exports = router
